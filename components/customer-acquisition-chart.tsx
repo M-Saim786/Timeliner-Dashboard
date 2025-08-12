@@ -15,8 +15,8 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 export function CustomerAcquisitionChart({ data }: { data: { month: string, newCustomers: number, churnedCustomers: number }[] }) {
   const labels = data.map((item) => item.month);
-  const newCustomers = data.map((item) => item.newCustomers);
-  const churnedCustomers = data.map((item) => item.churnedCustomers);
+  const newCustomers = data.map((item) => item.new);
+  const churnedCustomers = data.map((item) => item.churned);
 
   const chartData = {
     labels,
