@@ -54,12 +54,12 @@ const mockData = {
 
 export default function Dashboard() {
   const [planFilter, setPlanFilter] = useState("all")
-  const [dateRange, setDateRange] = useState(null); // Initialize as null
+  const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null); // Initialize as null
   const [stripeData, setStripeData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // 🔁 Non-debounced fetch for first load or manual use
-  const fetchStripeData = async ({ start, end, plan }) => {
+  const fetchStripeData = async ({ start, end, plan }: { start: string; end: string; plan: string }) => {
     setLoading(true)
     try {
       // Corrected API endpoint
@@ -77,10 +77,10 @@ export default function Dashboard() {
   }
 
   // 🕒 Debounced version for filters
-  const debouncedFetchRef = useRef()
+  const debouncedFetchRef = useRef<ReturnType<typeof debounce> | null>(null)
   useEffect(() => {
     debouncedFetchRef.current = debounce(fetchStripeData, 500)
-    return () => debouncedFetchRef.current.cancel()
+    return () => debouncedFetchRef.current?.cancel()
   }, [])
 
   // ✅ Call normal fetch on first load
@@ -97,17 +97,21 @@ export default function Dashboard() {
 
   // 👇 Event handlers for filters
   const handleDateChange = useCallback(
-    ({ start, end }) => {
-      setDateRange({ start, end })
-      if (debouncedFetchRef.current) {
-        debouncedFetchRef.current({ start, end, plan: planFilter })
+    (range: { start: string; end: string } | null) => {
+      if (range?.start && range?.end) {
+        setDateRange({ start: range.start, end: range.end })
+        if (debouncedFetchRef.current) {
+          debouncedFetchRef.current({ start: range.start, end: range.end, plan: planFilter })
+        }
+      } else {
+        setDateRange(null)
       }
     },
     [planFilter]
   )
 
   const handlePlanChange = useCallback(
-    (newPlan) => {
+    (newPlan: string) => {
       setPlanFilter(newPlan)
       if (dateRange && debouncedFetchRef.current) {
         debouncedFetchRef.current({ start: dateRange.start, end: dateRange.end, plan: newPlan })

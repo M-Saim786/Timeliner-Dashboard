@@ -12,8 +12,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 type DatePickerWithRangeProps = React.HTMLAttributes<HTMLDivElement> & {
-  value?: { start: string; end: string }
-  onChange?: (range: { start: string; end: string }) => void
+  value?: { start: string; end: string } | null
+  onChange?: (range: { start: string; end: string } | null) => void
 }
 
 export function DatePickerWithRange({
@@ -29,7 +29,14 @@ export function DatePickerWithRange({
       }
     : undefined
 
-  const [preset, setPreset] = React.useState("last30days")
+  // Internal state for temporary date selection (not yet applied)
+  const [tempDateRange, setTempDateRange] = React.useState<DateRange | undefined>(controlledDate)
+  
+  // Track preset selection separately from manual selection
+  const [preset, setPreset] = React.useState<string | null>(null)
+  
+  // Track if popover is open to manage state
+  const [isOpen, setIsOpen] = React.useState(false)
 
   const presets = [
     { value: "today", label: "Today", days: 0 },
@@ -41,14 +48,45 @@ export function DatePickerWithRange({
     { value: "thisyear", label: "This year", days: 365 },
   ]
 
-  const handlePresetChange = (value: string) => {
-    setPreset(value)
-    const selectedPreset = presets.find((p) => p.value === value)
+  // Update internal state when external value changes
+  React.useEffect(() => {
+    if (value) {
+      const newRange = {
+        from: parseISO(value.start),
+        to: parseISO(value.end),
+      }
+      setTempDateRange(newRange)
+      
+      // Check if the current value matches any preset
+      const today = new Date()
+      const startDate = parseISO(value.start)
+      const endDate = parseISO(value.end)
+      
+      const matchingPreset = presets.find((p) => {
+        const expectedStart = addDays(today, -p.days)
+        return (
+          startDate.toDateString() === expectedStart.toDateString() &&
+          endDate.toDateString() === today.toDateString()
+        )
+      })
+      
+      setPreset(matchingPreset?.value || null)
+    } else {
+      setTempDateRange(undefined)
+      setPreset(null)
+    }
+  }, [value])
+
+  const handlePresetChange = (presetValue: string) => {
+    setPreset(presetValue)
+    const selectedPreset = presets.find((p) => p.value === presetValue)
     if (selectedPreset) {
       const newRange = {
         from: addDays(new Date(), -selectedPreset.days),
         to: new Date(),
       }
+      setTempDateRange(newRange)
+      // Apply preset immediately since it's a complete range
       onChange?.({
         start: newRange.from.toISOString().split("T")[0],
         end: newRange.to.toISOString().split("T")[0],
@@ -57,17 +95,41 @@ export function DatePickerWithRange({
   }
 
   const handleManualChange = (range: DateRange | undefined) => {
-    if (range?.from && range?.to) {
+    // Clear preset when manually selecting dates
+    setPreset(null)
+    // Update internal state without triggering onChange
+    setTempDateRange(range)
+  }
+
+  const handleApply = () => {
+    if (tempDateRange?.from && tempDateRange?.to) {
       onChange?.({
-        start: range.from.toISOString().split("T")[0],
-        end: range.to.toISOString().split("T")[0],
+        start: tempDateRange.from.toISOString().split("T")[0],
+        end: tempDateRange.to.toISOString().split("T")[0],
       })
+      setIsOpen(false) // Close popover after applying
     }
   }
 
+  const handleClearSelection = () => {
+    setPreset(null)
+    setTempDateRange(undefined)
+    onChange?.(null)
+    setIsOpen(false) // Close popover after clearing
+  }
+
+  const handleCancel = () => {
+    // Reset to original value and close popover
+    setTempDateRange(controlledDate)
+    setIsOpen(false)
+  }
+
+  const isApplyDisabled = !tempDateRange?.from || !tempDateRange?.to
+  const hasChanges = JSON.stringify(tempDateRange) !== JSON.stringify(controlledDate)
+
   return (
     <div className={cn("grid gap-2", className)}>
-      <Popover>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
             id="date"
@@ -93,8 +155,21 @@ export function DatePickerWithRange({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 bg-popover" align="start">
-          <div className="p-3 border-b">
-            <Select value={preset} onValueChange={handlePresetChange}>
+          <div className="p-3 border-b space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Quick Presets</span>
+              {controlledDate && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearSelection}
+                  className="h-6 px-2 text-xs"
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+            <Select value={preset || ""} onValueChange={handlePresetChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select preset" />
               </SelectTrigger>
@@ -107,16 +182,52 @@ export function DatePickerWithRange({
               </SelectContent>
             </Select>
           </div>
+          
           <Calendar
             initialFocus
             mode="range"
-            defaultMonth={controlledDate?.from}
-            selected={controlledDate}
+            defaultMonth={tempDateRange?.from || controlledDate?.from || new Date()}
+            selected={tempDateRange}
             onSelect={handleManualChange}
             numberOfMonths={2}
+            disabled={(date) => date > new Date()}
           />
+          
+          {/* Action buttons */}
+          <div className="p-3 border-t flex items-center justify-between gap-2">
+            <div className="text-sm text-muted-foreground">
+              {tempDateRange?.from && tempDateRange?.to ? (
+                <>
+                  {format(tempDateRange.from, "MMM dd")} - {format(tempDateRange.to, "MMM dd, yyyy")}
+                </>
+              ) : tempDateRange?.from ? (
+                `Start: ${format(tempDateRange.from, "MMM dd, yyyy")}`
+              ) : (
+                "Select start and end dates"
+              )}
+            </div>
+            <div className="flex gap-2">
+              {hasChanges && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={handleApply}
+                disabled={isApplyDisabled}
+              >
+                Apply
+              </Button>
+            </div>
+          </div>
         </PopoverContent>
       </Popover>
     </div>
   )
 }
+
