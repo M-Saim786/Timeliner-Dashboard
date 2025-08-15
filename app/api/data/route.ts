@@ -37,10 +37,15 @@ export async function GET(req: NextRequest) {
     const start = searchParams.get('start');
     const end = searchParams.get('end');
     const selectedPlan = searchParams.get('plan') || 'all';
-    const startTimestamp = Math.floor(new Date(start).getTime() / 1000);
-    const endTimestamp = Math.floor(new Date(end).getTime() / 1000);
+    // Fix timezone handling - ensure dates are processed correctly
+    const startDate = new Date(start + 'T00:00:00.000Z');
+    const endDate = new Date(end + 'T23:59:59.999Z');
+    const startTimestamp = Math.floor(startDate.getTime() / 1000);
+    const endTimestamp = Math.floor(endDate.getTime() / 1000);
 
     console.log("start:", start, " end:", end, "selectedPlan: ", selectedPlan);
+    console.log("startTimestamp:", startTimestamp, "endTimestamp:", endTimestamp);
+    console.log("startDate:", new Date(startTimestamp * 1000).toISOString(), "endDate:", new Date(endTimestamp * 1000).toISOString());
     // In a real app, protect this endpoint (e.g., check for admin session)
     // if (!isAdmin) { return NextResponse.json({ error: { message: 'Unauthorized' } }, { status: 401 }); }
 
@@ -105,8 +110,7 @@ export async function GET(req: NextRequest) {
         // --- 3. CALCULATE METRICS ---
 
         const now = new Date();
-        const startDate = start ? new Date(start) : new Date(now.getFullYear(), now.getMonth(), 1);
-        const endDate = end ? new Date(end) : now;
+        // startDate and endDate are already defined above with proper timezone handling
 
         // SECTION 1 & 2: Core Revenue & Summary Stats
         let mrr = 0;
@@ -144,7 +148,7 @@ export async function GET(req: NextRequest) {
                     ? price.unit_amount / 12
                     : price.unit_amount;
                 // console.log("price.recurring.interval", price.recurring.interval)
-                console.log("monthlyCost", monthlyCost)
+                console.log(`monthlyCost: ${monthlyCost} cents = $${(monthlyCost / 100).toFixed(2)} - Plan: ${price.recurring.interval}`)
 
                 mrr += monthlyCost;
 
@@ -171,6 +175,12 @@ export async function GET(req: NextRequest) {
         });
         activePayingCustomers = activeCustomerIds.size;
         console.log("Total Customers:", activePayingCustomers);
+
+        console.log(`\n=== MRR SUMMARY ===`);
+        console.log(`Total MRR (cents): ${mrr}`);
+        console.log(`Total MRR (dollars): $${(mrr / 100).toFixed(2)}`);
+        console.log(`Expected from transactions: ~$495`);
+        console.log(`========================`);
 
         mrr /= 100; // Convert from cents to dollars
 
@@ -372,11 +382,20 @@ export async function GET(req: NextRequest) {
                 // Rule: The subscription must have been created before the end of the month we are looking at,
                 // AND it must either be still active (not canceled) OR was canceled after the end of that month.
                 // This correctly captures the "active state" at a point in time.
+                let subscriptionCount = 0;
                 if (createdDate <= monthEndDate && (!canceledDate || canceledDate > monthEndDate)) {
                     const price = sub.items.data[0].price;
                     const monthlyCost = price.recurring.interval === 'year'
                         ? price.unit_amount / 12
                         : price.unit_amount;
+
+                    //print monthlyCost with item.price.product.name and sub.customer.id
+
+                    
+
+                    console.log("monthlyCost", monthlyCost, "product.name", price.product.name);
+                    subscriptionCount++;
+
 
                     monthlyMRR += monthlyCost;
                     monthlyCustomers.add(sub.customer.id || sub.customer);
