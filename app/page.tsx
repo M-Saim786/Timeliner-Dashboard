@@ -41,6 +41,45 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import LoadingSpinner from "@/components/loading-spinner"
 // --- END LAZY LOADED COMPONENTS ---
 
+// Type definitions for the Stripe data structure
+interface StripeData {
+  section1_revenue_retention?: {
+    mrr?: { value: number };
+    arr?: { value: number };
+    ltv?: { value: number };
+    customerChurnRate?: { value: number };
+  };
+  section2_summary_stats?: {
+    totalCustomers?: { value: number };
+    newThisPeriod?: { value: number };
+    arpa?: { value: number };
+  };
+  section3_and_6_growth?: {
+    revenueCustomerChart?: any;
+    customerAcquisitionChart?: any;
+    planDistribution?: Record<string, number>;
+  };
+  section4_cash_flow?: {
+    revenueCollectedThisMonth?: { value: number };
+    monthlyRevenueData?: Array<{
+      month: string;
+      invoiceCount: number;
+      revenue: number;
+      monthlyPlans?: number;
+      annualPlans?: number;
+      oneTimeCharges?: number;
+    }>;
+  };
+  section5_trial_funnel?: {
+    trialsStarted?: { value: number };
+    activeTrials?: { value: number };
+    convertedToPaid?: { value: number };
+    canceledTrials?: { value: number };
+    conversionRate?: { value: number };
+  };
+  availablePlans?: string[];
+}
+
 // Mock data for sections not yet powered by API
 const mockData = {
   affiliates: [
@@ -55,7 +94,7 @@ const mockData = {
 export default function Dashboard() {
   const [planFilter, setPlanFilter] = useState("all")
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null); // Initialize as null
-  const [stripeData, setStripeData] = useState(null);
+  const [stripeData, setStripeData] = useState<StripeData | null>(null);
   const [loading, setLoading] = useState(true);
 
   // 🔁 Non-debounced fetch for first load or manual use
@@ -120,12 +159,12 @@ export default function Dashboard() {
     [dateRange]
   )
 
-  const formatCurrency = (value) =>
+  const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {
       style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0,
     }).format(value);
 
-  const formatDelta = (delta, trend) => {
+  const formatDelta = (delta: number, trend: string) => {
     // Placeholder as API doesn't provide deltas yet
     const Icon = trend === "up" ? TrendingUp : TrendingDown;
     const color = trend === "up" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
@@ -169,13 +208,13 @@ export default function Dashboard() {
   const planDistributionData = stripeData.section3_and_6_growth?.planDistribution
     ? Object.entries(stripeData.section3_and_6_growth.planDistribution)
       .filter(([key]) => key !== 'total') // Exclude the total count
-      .map(([name, value]) => ({ name, value }))
+      .map(([name, value]) => ({ name, value: value as number }))
     : [];
 
   const planDistributionForText = stripeData.section3_and_6_growth?.planDistribution
     ? Object.entries(stripeData.section3_and_6_growth.planDistribution)
       .filter(([key]) => key !== 'total')
-      .map(([plan, users]) => ({ plan, users }))
+      .map(([plan, users]) => ({ plan, users: users as number }))
     : [];
 
   return (
@@ -190,7 +229,10 @@ export default function Dashboard() {
             </div>
             <div className="flex flex-wrap md:flex-nowrap items-center gap-4">
               <ThemeToggle />
-              <DatePickerWithRange value={dateRange} onChange={handleDateChange} />
+              <DatePickerWithRange 
+                value={dateRange} 
+                onChange={handleDateChange as any} 
+              />
               <Select value={planFilter} onValueChange={handlePlanChange}>
                 <SelectTrigger className="w-[160px] sm:w-[180px]">
                   <SelectValue placeholder="Plan Filter" />
@@ -199,12 +241,18 @@ export default function Dashboard() {
 
                   <SelectItem value="all">All Plans</SelectItem>
                   {stripeData?.availablePlans && stripeData?.availablePlans.map((plan) => (
-                    <SelectItem value={plan}>{plan}</SelectItem>
+                    <SelectItem key={plan} value={plan}>{plan}</SelectItem>
                   ))}
                   {/* <SelectItem value="monthly">Monthly</SelectItem>
                   <SelectItem value="annual">Annual</SelectItem> */}
                 </SelectContent>
               </Select>
+              {loading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="w-4 h-4 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin"></div>
+                  <span>Updating...</span>
+                </div>
+              )}
             </div>
           </div>
 
