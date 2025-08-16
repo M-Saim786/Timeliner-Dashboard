@@ -59,10 +59,7 @@ export async function GET(req: NextRequest) {
                 {
                     status: 'all',
                     expand: ['data.customer', 'data.items.data.price'], // only expand this far
-                    created: {
-                        gte: startTimestamp,
-                        lte: endTimestamp
-                    }
+                    // Remove date filter to get ALL subscriptions for proper invoice categorization
                 }
             ),
             getAllStripeData(
@@ -266,6 +263,111 @@ export async function GET(req: NextRequest) {
             })
             .reduce((sum, invoice) => sum + invoice.amount_paid, 0) / 100;
         console.log("revenueThisMonth", revenueThisMonth)
+
+        // Generate monthly revenue data for the table
+        const monthlyRevenueData = [];
+        let revenueMonthIterator = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+        
+        while (revenueMonthIterator <= endDate) {
+            const monthStart = new Date(revenueMonthIterator.getFullYear(), revenueMonthIterator.getMonth(), 1);
+            const monthEnd = new Date(revenueMonthIterator.getFullYear(), revenueMonthIterator.getMonth() + 1, 0, 23, 59, 59);
+            const monthLabel = revenueMonthIterator.toLocaleString('default', { month: 'long', year: 'numeric' });
+            
+            // Filter invoices for this month
+            const monthInvoices = allPaidInvoices.filter(invoice => {
+                const invoiceDate = new Date(invoice.created * 1000);
+                return invoiceDate >= monthStart && invoiceDate <= monthEnd;
+            });
+            
+            const monthRevenue = monthInvoices.reduce((sum, invoice) => sum + invoice.amount_paid, 0) / 100;
+            const invoiceCount = monthInvoices.length;
+            
+            // Calculate breakdown by plan type
+            let monthlyPlans = 0;
+            let annualPlans = 0;
+            let oneTimeCharges = 0;
+            
+            for (const invoice of monthInvoices) {
+                let categorized = false;
+                
+                // Method 1: Check if invoice has subscription ID
+                if (invoice.subscription) {
+                    const subscription = allSubscriptions.find(sub => sub.id === invoice.subscription);
+                    if (subscription && subscription.items.data.length > 0) {
+                        const price = subscription.items.data[0].price;
+                        if (price.recurring && price.recurring.interval === 'year') {
+                            annualPlans += invoice.amount_paid / 100;
+                            categorized = true;
+                        } else if (price.recurring && price.recurring.interval === 'month') {
+                            monthlyPlans += invoice.amount_paid / 100;
+                            categorized = true;
+                        }
+                    }
+                }
+                
+                // Method 2: Check invoice line items for subscription details
+                if (!categorized && invoice.lines && invoice.lines.data.length > 0) {
+                    for (const lineItem of invoice.lines.data) {
+                        if (lineItem.price && lineItem.price.recurring) {
+                            if (lineItem.price.recurring.interval === 'year') {
+                                annualPlans += (lineItem.amount || 0) / 100;
+                                categorized = true;
+                            } else if (lineItem.price.recurring.interval === 'month') {
+                                monthlyPlans += (lineItem.amount || 0) / 100;
+                                categorized = true;
+                            }
+                        }
+                    }
+                }
+                
+                // Method 3: If still not categorized, check if it's a subscription-related invoice
+                if (!categorized) {
+                    // Look for any subscription that might be related to this customer
+                    const customerSubscriptions = allSubscriptions.filter(sub => 
+                        sub.customer.id === invoice.customer
+                    );
+                    
+                    if (customerSubscriptions.length > 0) {
+                        // Assume it's related to their subscription plan
+                        const subscription = customerSubscriptions[0];
+                        if (subscription.items.data.length > 0) {
+                            const price = subscription.items.data[0].price;
+                            if (price.recurring && price.recurring.interval === 'year') {
+                                annualPlans += invoice.amount_paid / 100;
+                                categorized = true;
+                            } else if (price.recurring && price.recurring.interval === 'month') {
+                                monthlyPlans += invoice.amount_paid / 100;
+                                categorized = true;
+                            }
+                        }
+                    }
+                }
+                
+                // If still not categorized, it's a one-time charge
+                if (!categorized) {
+                    oneTimeCharges += invoice.amount_paid / 100;
+                }
+            }
+            
+            // Debug logging for this month
+            console.log(`=== ${monthLabel} Revenue Breakdown ===`);
+            console.log(`Total Revenue: $${monthRevenue}`);
+            console.log(`Monthly Plans: $${monthlyPlans}`);
+            console.log(`Annual Plans: $${annualPlans}`);
+            console.log(`One-time Charges: $${oneTimeCharges}`);
+            console.log(`Invoice Count: ${invoiceCount}`);
+            
+            monthlyRevenueData.push({
+                month: monthLabel,
+                revenue: monthRevenue,
+                invoiceCount: invoiceCount,
+                monthlyPlans: Number(monthlyPlans.toFixed(2)),
+                annualPlans: Number(annualPlans.toFixed(2)),
+                oneTimeCharges: Number(oneTimeCharges.toFixed(2))
+            });
+            
+            revenueMonthIterator.setMonth(revenueMonthIterator.getMonth() + 1);
+        }
         // SECTION 5: Trial Funnel (using all-time data for conversion rate)
         // SECTION 5: Trial Funnel
         console.log("allSubscriptions.length", allSubscriptions.length)
@@ -464,6 +566,7 @@ export async function GET(req: NextRequest) {
             },
             section4_cash_flow: {
                 revenueCollectedThisMonth: { value: revenueThisMonth, description: "Actual cash collected in the period" },
+                monthlyRevenueData: monthlyRevenueData,
             },
             section5_trial_funnel: {
                 trialsStarted: { value: trialsStarted, description: "Total trials ever started" },

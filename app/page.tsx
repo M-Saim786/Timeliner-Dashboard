@@ -10,7 +10,7 @@ import {
   UserCheck,
   BarChart3,
   Zap,
-  CheckCircle, Clock, XCircle
+  CheckCircle, Clock, XCircle, Calendar
 } from "lucide-react"
 import debounce from "lodash.debounce";
 
@@ -293,6 +293,97 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             </div>
+
+          {/* Section 4: Total Revenue Collected (Cash Flow) */}
+          <Card className="bg-card">
+            <CardHeader>
+              <CardTitle>Actual Revenue Collected (Cash Flow)</CardTitle>
+              <CardDescription>Total amount of money paid by customers in the selected period - includes all successful invoices, renewals, upgrades/downgrades, and one-time charges</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Summary Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex justify-between items-center p-4 border rounded-lg bg-muted/50">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Total Revenue Collected</p>
+                      <p className="text-2xl font-bold">{formatCurrency(stripeData.section4_cash_flow?.revenueCollectedThisMonth?.value ?? 0)}</p>
+                    </div>
+                    <DollarSign className="h-8 w-8 text-emerald-500" />
+                  </div>
+                  <div className="flex justify-between items-center p-4 border rounded-lg bg-muted/50">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Period Start</p>
+                      <p className="text-lg font-semibold">{dateRange?.start || 'Not set'}</p>
+                    </div>
+                    <Calendar className="h-8 w-8 text-blue-500" />
+                  </div>
+                  <div className="flex justify-between items-center p-4 border rounded-lg bg-muted/50">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Period End</p>
+                      <p className="text-lg font-semibold">{dateRange?.end || 'Not set'}</p>
+                    </div>
+                    <Calendar className="h-8 w-8 text-blue-500" />
+                  </div>
+                </div>
+
+                {/* Monthly Revenue Table */}
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-4">Monthly Revenue Collection</h4>
+                  <div className="space-y-4">
+                    {stripeData.section4_cash_flow?.monthlyRevenueData ? (
+                      stripeData.section4_cash_flow.monthlyRevenueData.map((monthData: any, index: number) => (
+                        <div key={index} className="border rounded-lg p-4 bg-card">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h5 className="text-lg font-semibold">{monthData.month}</h5>
+                              <p className="text-sm text-muted-foreground">
+                                {monthData.invoiceCount} successful invoice{monthData.invoiceCount !== 1 ? 's' : ''}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-emerald-600">
+                                {formatCurrency(monthData.revenue)}
+                              </div>
+
+                            </div>
+                          </div>
+                          
+                          {/* Revenue Breakdown */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                            <div className="bg-muted/50 p-3 rounded">
+                              <div className="font-medium text-muted-foreground">Monthly Plans</div>
+                              <div className="text-lg font-semibold">
+                                {formatCurrency(monthData.monthlyPlans || 0)}
+                              </div>
+                            </div>
+                            <div className="bg-muted/50 p-3 rounded">
+                              <div className="font-medium text-muted-foreground">Annual Plans</div>
+                              <div className="text-lg font-semibold">
+                                {formatCurrency(monthData.annualPlans || 0)}
+                              </div>
+                            </div>
+                            <div className="bg-muted/50 p-3 rounded">
+                              <div className="font-medium text-muted-foreground">One-time Charges</div>
+                              <div className="text-lg font-semibold">
+                                {formatCurrency(monthData.oneTimeCharges || 0)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-muted-foreground py-8 border rounded-lg">
+                        Monthly revenue data will appear here once available
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Trial Funnel */}
           <Card className="bg-card">
