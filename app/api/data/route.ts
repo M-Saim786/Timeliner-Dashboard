@@ -183,9 +183,10 @@ export async function GET(req: NextRequest) {
         console.log(`========================`);
 
         mrr /= 100; // Convert from cents to dollars
+        mrr = Number(mrr.toFixed(2)); // Ensure 2 decimal places
 
-        const arr = mrr * 12;
-        const arpa = activePayingCustomers > 0 ? mrr / activePayingCustomers : 0;
+        const arr = Number((mrr * 12).toFixed(2)); // Ensure 2 decimal places
+        const arpa = activePayingCustomers > 0 ? Number((mrr / activePayingCustomers).toFixed(2)) : 0;
 
         // SECTION 2: New Customers This Month
         // Find the first paid invoice for each customer
