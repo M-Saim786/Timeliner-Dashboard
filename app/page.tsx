@@ -473,6 +473,154 @@ export default function Dashboard() {
               </Card>
             </div>
           </div>
+
+          {/* Section 7: Coming Soon Metrics */}
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-muted-foreground">🎯 Coming Soon Metrics</h2>
+              <p className="text-muted-foreground mt-2">These sections are placeholders for future KPIs and dashboards that will be integrated later.</p>
+            </div>
+
+            {/* Affiliate Performance */}
+            <Card className="bg-card">
+              <CardHeader>
+                <CardTitle>🔹 Affiliate Performance (Coming Soon)</CardTitle>
+                <CardDescription>Top affiliates, referrals, and commission tracking</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">Top Affiliates</div>
+                    <div className="text-lg font-bold">Sarah Chen, Mike Johnson</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">Subs Referred</div>
+                    <div className="text-lg font-bold">42</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">MRR Generated</div>
+                    <div className="text-lg font-bold">{formatCurrency(5040)}</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">Commission %</div>
+                    <div className="text-lg font-bold">15-20%</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* User Satisfaction */}
+            <Card className="bg-card">
+              <CardHeader>
+                <CardTitle>🔹 User Satisfaction (Coming Soon)</CardTitle>
+                <CardDescription>CSAT, NPS, feedback, and complaint tracking</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">CSAT (1-5)</div>
+                    <div className="text-lg font-bold">4.2</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">NPS Score</div>
+                    <div className="text-lg font-bold">42</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">Feedback Count</div>
+                    <div className="text-lg font-bold">156</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">Top Complaints</div>
+                    <div className="text-lg font-bold">Loading, Integrations</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Ad Spend & Acquisition Costs */}
+            <Card className="bg-card">
+              <CardHeader>
+                <CardTitle>🔹 Ad Spend & Acquisition Costs (Coming Soon)</CardTitle>
+                <CardDescription>Marketing spend, CAC, and demo conversion metrics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">Total Ad Spend</div>
+                    <div className="text-lg font-bold">{formatCurrency(8500)}</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">CAC per Trial</div>
+                    <div className="text-lg font-bold">{formatCurrency(386)}</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">CAC per Paid User</div>
+                    <div className="text-lg font-bold">{formatCurrency(1700)}</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">Demo Calls Booked</div>
+                    <div className="text-lg font-bold">12</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">Demo-to-Trial Rate</div>
+                    <div className="text-lg font-bold">75%</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Product Usage & Engagement */}
+            <Card className="bg-card">
+              <CardHeader>
+                <CardTitle>🔹 Product Usage & Engagement (Coming Soon)</CardTitle>
+                <CardDescription>DAU/WAU/MAU, active users, and feature usage</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">DAU / WAU / MAU</div>
+                    <div className="text-lg font-bold">45 / 180 / 720</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">% Active Users (30d)</div>
+                    <div className="text-lg font-bold">68%</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">Tasks Created</div>
+                    <div className="text-lg font-bold">2,847</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">Videos Uploaded</div>
+                    <div className="text-lg font-bold">156</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Operational & Internal KPIs */}
+            <Card className="bg-card">
+              <CardHeader>
+                <CardTitle>🔹 Operational & Internal KPIs (Coming Soon)</CardTitle>
+                <CardDescription>Bug resolution, onboarding, and development metrics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">Bug Resolution Rate</div>
+                    <div className="text-lg font-bold">94%</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">Avg Onboarding Time</div>
+                    <div className="text-lg font-bold">8.5 min</div>
+                  </div>
+                  <div className="p-4 border rounded-lg bg-muted/30">
+                    <div className="text-sm font-medium text-muted-foreground">Dev Velocity</div>
+                    <div className="text-lg font-bold">3.2 features/sprint</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </Suspense>
