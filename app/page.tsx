@@ -260,40 +260,39 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* These charts can be uncommented once you implement historical data fetching */}
-            {/* ... */}
-            <Card className="lg:col-span-2 bg-card">
-              <CardHeader>
-                <CardTitle>Revenue & Customer Growth</CardTitle>
-                <CardDescription>Monthly revenue and customer count trends</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RevenueChart data={stripeData?.section3_and_6_growth?.revenueCustomerChart} />
-              </CardContent>
-            </Card>
+                      {/* Section 3: Revenue & Customer Growth */}
+            <div className="space-y-6">
+              {/* Main Revenue & Customer Growth Chart */}
+              <Card className="bg-card">
+                <CardHeader>
+                  <CardTitle>Revenue Growth Over Time</CardTitle>
+                  <CardDescription>Monthly revenue trends - only includes paying customers (excludes trials that never paid)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RevenueChart data={stripeData?.section3_and_6_growth?.revenueCustomerChart} />
+                </CardContent>
+              </Card>
 
-            <Card className="bg-card">
-              <CardHeader>
-                <CardTitle>Customer Acquisition</CardTitle>
-                <CardDescription>New vs churned customers by month</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CustomerAcquisitionChart data={stripeData?.section3_and_6_growth?.customerAcquisitionChart} />
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card">
-              <CardHeader>
-                <CardTitle>Plan Distribution</CardTitle>
-                <CardDescription>Breakdown of currently active customers</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <PlanSplitChart distribution={planDistributionData} />
-              </CardContent>
-            </Card>
-          </div>
+              {/* Customer Count Growth Chart */}
+              <Card className="bg-card">
+                <CardHeader>
+                  <CardTitle>Customer Count Growth Over Time</CardTitle>
+                  <CardDescription>Monthly customer count trends - only includes paying customers (excludes trials that never paid)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-4">Customer Acquisition vs Churn</h4>
+                      <CustomerAcquisitionChart data={stripeData?.section3_and_6_growth?.customerAcquisitionChart} />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-4">Plan Distribution</h4>
+                      <PlanSplitChart distribution={planDistributionData} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
           {/* Trial Funnel */}
           <Card className="bg-card">
