@@ -211,32 +211,49 @@ export async function GET(req: NextRequest) {
         }
         console.log("newThisPeriod", newThisPeriod)
 
-        // SECTION 1: Churn Rate (for the period)
+        // ✅ FIXED: Churn Rate calculation according to specifications
+        // Churn Rate (%) = (Churned Customers / Customers at Start of Period) × 100
+        // Rules: Count only users who have paid at least once
+        // Churned = customers whose subscription was active at start of period AND is no longer active after current_period_end
+        
+        // 1. Find customers who were active at the START of the period (Jul 31)
+        const customersAtStartOfPeriod = new Set();
+        allSubscriptions.forEach(sub => {
+            const isPaidCustomer = paidCustomerIds.has(sub.customer.id);
+            if (!isPaidCustomer) return;
+            
+            // Check if subscription was active at start of period
+            const wasActiveAtStart = sub.created <= startTimestamp && 
+                (!sub.canceled_at || sub.canceled_at > startTimestamp) &&
+                ['active', 'past_due'].includes(sub.status);
+            
+            if (wasActiveAtStart) {
+                customersAtStartOfPeriod.add(sub.customer.id);
+            }
+        });
+        
+        console.log("Customers at start of period (Jul 31):", customersAtStartOfPeriod.size);
+        
+        // 2. Find customers who churned during the period (Jul 31 - Aug 15)
         const churnedInPeriod = allSubscriptions.filter(sub => {
             const isPaidCustomer = paidCustomerIds.has(sub.customer.id);
+            if (!isPaidCustomer) return false;
+            
             const isCanceled = sub.status === 'canceled';
             const canceledDate = sub.canceled_at ? new Date(sub.canceled_at * 1000) : null;
-            const inDateRange = canceledDate && canceledDate >= startDate && canceledDate <= endDate;
-
-            // console.log("----- Subscription Check -----");
-            // console.log("Customer ID:", sub.customer.id);
-            // console.log("Paid Customer?:", isPaidCustomer);
-            // console.log("Status:", sub.status);
-            // console.log("Canceled At:", canceledDate);
-            // console.log("In Date Range?:", inDateRange);
-
-            return isPaidCustomer && isCanceled && inDateRange;
+            
+            // Churned during the period AND was active at start
+            const churnedDuringPeriod = canceledDate && canceledDate >= startDate && canceledDate <= endDate;
+            const wasActiveAtStart = customersAtStartOfPeriod.has(sub.customer.id);
+            
+            return isCanceled && churnedDuringPeriod && wasActiveAtStart;
         }).length;
-
+        
         console.log("Churned in period count:", churnedInPeriod);
-
-        // Denominator for churn: Active customers at the start of the period
-        // Proxy: Current Active Customers + Customers who churned in the period
-        console.log("activePayingCustomers:", activePayingCustomers)
-        const customersAtStartOfPeriod = activePayingCustomers + churnedInPeriod;
-        console.log("customersAtStartOfPeriod:", customersAtStartOfPeriod)
-        const churnRate = customersAtStartOfPeriod > 0 ? (churnedInPeriod / customersAtStartOfPeriod) : 0;
-        console.log("churnRate", churnRate)
+        
+        // 3. Calculate churn rate
+        const churnRate = customersAtStartOfPeriod.size > 0 ? (churnedInPeriod / customersAtStartOfPeriod.size) * 100 : 0;
+        console.log("Churn Rate:", churnRate.toFixed(2) + "%");
         // SECTION 1: LTV
         // Avoid division by zero if churn is 0
         const ltv = churnRate > 0 ? arpa / churnRate : arpa * 24; // Capping at 24x ARPA for new businesses
