@@ -227,6 +227,39 @@ export default function Dashboard() {
             ))}
           </div>
 
+          {/* Section 2: Summary Stats */}
+          <Card className="bg-card">
+            <CardHeader>
+              <CardTitle>ARPA, Total Customers, New This Period</CardTitle>
+              <CardDescription>Only include paying users (at least one successful invoice)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex justify-between items-center p-4 border rounded-lg bg-muted/50">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Active Customers</p>
+                    <p className="text-2xl font-bold">{stripeData.section2_summary_stats?.totalCustomers?.value?.toLocaleString() ?? 'N/A'}</p>
+                  </div>
+                  <Users className="h-8 w-8 text-blue-500" />
+                </div>
+                <div className="flex justify-between items-center p-4 border rounded-lg bg-muted/50">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">New Customers (Period)</p>
+                    <p className="text-2xl font-bold">{stripeData.section2_summary_stats?.newThisPeriod?.value?.toLocaleString() ?? 'N/A'}</p>
+                  </div>
+                  <UserCheck className="h-8 w-8 text-green-500" />
+                </div>
+                <div className="flex justify-between items-center p-4 border rounded-lg bg-muted/50">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">ARPA</p>
+                    <p className="text-2xl font-bold">{formatCurrency(stripeData.section2_summary_stats?.arpa?.value ?? 0)}</p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-emerald-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* These charts can be uncommented once you implement historical data fetching */}
@@ -343,11 +376,8 @@ export default function Dashboard() {
 
             <div className="space-y-6">
               <Card className="bg-card">
-                <CardHeader><CardTitle>Summary Stats</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Cash Flow</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center text-sm"><span className="text-muted-foreground">Total Active Customers</span><span className="font-bold text-lg">{stripeData.section2_summary_stats?.totalCustomers?.value?.toLocaleString() ?? 'N/A'}</span></div>
-                  <div className="flex justify-between items-center text-sm"><span className="text-muted-foreground">New Customers (Period)</span><span className="font-bold text-lg">{stripeData.section2_summary_stats?.newThisPeriod?.value?.toLocaleString() ?? 'N/A'}</span></div>
-                  <div className="flex justify-between items-center text-sm"><span className="text-muted-foreground">ARPA</span><span className="font-bold text-lg">{formatCurrency(stripeData.section2_summary_stats?.arpa?.value ?? 0)}</span></div>
                   <div className="flex justify-between items-center text-sm"><span className="text-muted-foreground">Cash Collected (Period)</span><span className="font-bold text-lg">{formatCurrency(stripeData.section4_cash_flow?.revenueCollectedThisMonth?.value ?? 0)}</span></div>
                 </CardContent>
               </Card>
